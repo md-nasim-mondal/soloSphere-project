@@ -8,7 +8,7 @@ const app = express();
 
 // middle ware
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   Credential: true,
   optionSuccessStatus: 200,
 };
@@ -33,6 +33,9 @@ async function run() {
 
     const jobsCollection = client.db("soloSphereDB").collection("jobs");
     const bidsCollection = client.db("soloSphereDB").collection("bids");
+
+    //jwt generate
+    
 
     // Get all job data from db
     app.get("/jobs", async (req, res) => {
@@ -88,6 +91,34 @@ async function run() {
         },
       };
       const result = await jobsCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    // get all bids for a user by email from db
+    app.get("/my-bids/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await bidsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // get all bid request from db for job owner
+    app.get("/bid-requests/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "buyer.email": email };
+      const result = await bidsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Update Bid status
+    app.patch("/bid/:id", async (req, res) => {
+      const id = req.params.id;
+      const status = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: status,
+      };
+      const result = await bidsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
