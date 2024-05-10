@@ -1,53 +1,78 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import bgImg from "../../assets/images/login.jpg";
-import logo from "../../assets/images/logo.png";
-import { useContext, useEffect } from "react";
-import { AuthContext } from "../../provider/AuthProvider";
-import toast from "react-hot-toast";
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import bgImg from '../../assets/images/login.jpg'
+import logo from '../../assets/images/logo.png'
+import { useContext, useEffect } from 'react'
+import { AuthContext } from '../../provider/AuthProvider'
+import toast from 'react-hot-toast'
+import axios from 'axios'
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, signInWithGoogle, user, loading } = useContext(AuthContext);
-  const from = location.state || "/";
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { signIn, signInWithGoogle, user, loading } = useContext(AuthContext)
+  const from = location.state || '/'
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate('/')
     }
-  }, [navigate, user]);
+  }, [navigate, user])
 
   // Google signIn
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
-      toast.success("SignIn Successful");
-      navigate(from, { replace: true });
+      // 1. google sign In from firebase
+      const result = await signInWithGoogle()
+      // console.log(result.user)
+
+      //2. get token from server using email
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/jwt`,
+        {
+          email: result?.user?.email,
+        },
+        {
+          withCredentials: true,
+        }
+      )
+      console.log(data);
+      toast.success('SignIn Successful')
+      navigate(from, { replace: true })
     } catch (err) {
-      console.log(err);
-      toast.error(err?.message);
+      console.log(err)
+      toast.error(err?.message)
     }
-  };
+  }
 
   // Email Password SignIn
   const handleSignIn = async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const email = form.email.value;
-    const pass = form.password.value;
+    e.preventDefault()
+    const form = e.target
+    const email = form.email.value
+    const pass = form.password.value
     // console.log({ email, pass });
     try {
       //user login
-      const result = await signIn(email, pass);
-      console.log(result);
-      navigate(from, { replace: true });
-      toast.success("SignIn Successful");
+      const result = await signIn(email, pass)
+      // console.log(result)
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/jwt`,
+        {
+          email: result?.user?.email,
+        },
+        {
+          withCredentials: true,
+        }
+      )
+      console.log(data);
+      navigate(from, { replace: true })
+      toast.success('SignIn Successful')
     } catch (err) {
-      console.log(err);
-      toast.error(err?.message);
+      console.log(err)
+      toast.error(err?.message)
     }
-  };
-  if (user || loading) return;
+  }
+  if (user || loading) return
 
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-306px)] my-12">
@@ -161,7 +186,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
