@@ -10,7 +10,11 @@ const app = express();
 
 // middle ware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://solosphere-74d8e.web.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -113,6 +117,16 @@ async function run() {
           .send("You have already placed a bid on this job.");
       }
       const result = await bidsCollection.insertOne(bidData);
+
+      //update bid count in jobs collection
+      const updateDoc = {
+        $inc: { bid_count: 1 },
+      };
+      const jobQuery = { _id: new ObjectId(bidData.jobId) };
+      const updateBidCount = await jobsCollection.updateOne(
+        jobQuery,
+        updateDoc
+      );
       res.send(result);
     });
 
@@ -214,7 +228,7 @@ async function run() {
       let query = {
         job_title: { $regex: search, $options: "i" },
       };
-      if(filter) query.category = filter;
+      if (filter) query.category = filter;
       // const result = await jobsCollection.estimatedDocumentCount()
       const count = await jobsCollection.countDocuments(query);
       res.send({ count });
